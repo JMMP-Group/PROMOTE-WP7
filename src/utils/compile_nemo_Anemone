@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# ----------------------------------------------------------------
+# compile_nemo_Anemone
+#
+# Compile NEMO on the Anemone HPC.
+#
+# Contact:
+# Ollie Tooth (oliver.tooth@noc.ac.uk)
+#
+# Created By:
+# Andrew Coward (acc@noc.ac.uk) & Adam Blaker (atb299@noc.ac.uk)
+# ----------------------------------------------------------------
+
+# -- Set Environment -- #
+module purge
+module load NEMO/prg-env
+
+export OMP_NUM_THREADS=1
+
+# -- Compile NEMO -- #
+while read -r LINE; do
+  CFG=${LINE%% *}
+  ./makenemo -m Anemone-ifort-xios3 -j 32 -r "$CFG" || exit
+done <cfgs/work_cfgs.txt

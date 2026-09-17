@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# ----------------------------------------------------------------
+# compile_tools_Anemone
+#
+# Compile NEMO tools on the Anemone HPC.
+#
+# Contact:
+# Ollie Tooth (oliver.tooth@noc.ac.uk)
+#
+# Created By:
+# Andrew Coward (acc@noc.ac.uk) & Adam Blaker (atb299@noc.ac.uk)
+# ----------------------------------------------------------------
+
+# -- Set Environment -- #
+module purge
+module load NEMO/prg-env
+export OMP_NUM_THREADS=1
+
+# -- Compile Tools -- #
+for TOOL in DOMAINcfg REBUILD_NEMO WEIGHTS; do
+    ./maketools -m Anemone-ifort -j 32 -n $TOOL || exit
+done

@@ -1,0 +1,141 @@
+#!/bin/bash
+
+# ----------------------------------------------------
+# Setup Script -> PROMOTE-WP7 
+#
+# Setup script to download NEMO + AGRIF, configure
+# and compile on the Anemone HPC.
+#
+# Contact: Ollie Tooth (oliver.tooth@noc.ac.uk)
+# ----------------------------------------------------
+
+# -- Default Parameters -- #
+# Working directory:
+WD=$PWD
+# HPC System:
+SYSTEM=Anemone
+# NEMO + AGRIF Directory:
+NEMODIR=${WD}/nemo
+# Download NEMO + AGRIF (default -> True)
+USE_EXISTING_NEMO=0
+# Download Only (default -> False)
+STOP=0
+# Compile NEMO Tools (default -> False)
+COMPILE_TOOLS=0
+
+# GitHub Source:
+SOURCE=https://forge.nemo-ocean.eu/devs/ukmo/gosi/gosi.git
+# GitHub Branch:
+BRANCH=GOSI10_672ff863_xios3
+# GitHub Merge Branch:
+MERGE_BRANCH=28-agrif-with-a-parent-emplopying-localized-not-geopotential-vertical-coordinates
+# Target Branch:
+TARGET_BRANCH="eORCA025_SPNA_${SYSTEM}"
+
+# -- Inputs -- #
+usage() { echo "Usage: $0 [-b branch] [-m merge_branch] [-d directory] [-s system] [-u use_existing_nemo] [-t compile_tools] [-x stop_after_download]" 1>&2; exit 1; }
+while getopts ":b:m:d:s:u:t:x" o; do
+    case "${o}" in
+        b)
+            BRANCH=${OPTARG}
+            ;;
+        m)
+            MERGE_BRANCH=${OPTARG}
+            ;;
+        t)
+            COMPILE_TOOLS=${OPTARG}
+            ;;
+        d)
+            NEMODIR=$(realpath "${OPTARG}")
+            ;;
+        s)
+            SYSTEM=${OPTARG}
+            ;;
+        u)
+            USE_EXISTING_NEMO=1
+            ;;
+        x)
+            STOP=1
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+# -- Validate HPC System -- #
+if [[ "$SYSTEM" =~ ^([aA][nN][eE][mM][oO][nN][eE])$ ]]; then
+    SYSTEM=Anemone
+elif [[ "$SYSTEM" =~ ^([aA][rR][cC][hH][eE][rR][2])$ ]]; then
+    SYSTEM=Archer2
+else
+    echo "--> System not recognised. Options are: [Anemone, Archer2]"
+    exit
+fi
+
+# -- Download NEMO + AGRIF -- #
+if [[ "$USE_EXISTING_NEMO" == 0 ]]; then
+    # Checking out from NEMO + AGRIF from UKMO GitLab:
+    echo "--> Downloading NEMO + AGRIF [$BRANCH]"
+    git clone "$SOURCE" -b "$BRANCH" "$NEMODIR" || exit
+    cd "$NEMODIR"
+    git checkout "$BRANCH" || exit
+    echo "--> Merging NEMO + AGRIF branch $MERGE_BRANCH"
+    git merge "origin/$MERGE_BRANCH" || exit
+else
+    if [ -d "${NEMODIR}" ]; then
+        echo "--> Checking for existing NEMO + AGRIF clone at ${NEMODIR}"
+        cd "$NEMODIR" || exit
+        echo "--> Using existing clone of NEMO + AGRIF ${NEMODIR}"
+    else
+        echo "--> Request to use non-existent clone of NEMO + AGRIF"
+        exit
+    fi
+fi
+
+if [[ "$STOP" == 1 ]]; then
+    echo "--> Stopped after successful download"
+    exit
+fi
+
+# -- Preparing Configurations -- #
+echo "--> Preparing configurations for ${SYSTEM}"
+
+# Compilation Scripts:
+cd "${WD}"/src
+ln -sfT utils/compile_nemo_${SYSTEM} compile_nemo
+ln -sfT utils/compile_tools_${SYSTEM} compile_tools
+
+# Input Data Directories:
+cd "${WD}"/data
+ln -sfT INPUT_eORCA025_SPNA16_${SYSTEM} INPUT_eORCA025_SPNA16
+ln -sfT INPUT_eORCA025_SPNA20_${SYSTEM} INPUT_eORCA025_SPNA20
+
+if [[ "$USE_EXISTING_NEMO" == 0 ]]; then
+  echo "--> Copying configuration files into ${NEMODIR}"
+  CP_ARG="-r"
+else
+  echo "--> Updating configuration files in ${NEMODIR}"
+  CP_ARG="-ru"
+fi
+
+# NEMO Directories:
+cp "$CP_ARG" "${WD}"/{arch,cfgs,data} "$NEMODIR"/. || exit
+# AGRIF_QCO:
+cp "$CP_ARG" "${WD}"/src/utils/TIDY "$NEMODIR"/cfgs/AGRIF_QCO/eORCA025-SPNA16/.
+cp "$CP_ARG" "${WD}"/src/utils/TIDY "$NEMODIR"/cfgs/AGRIF_QCO/eORCA025-SPNA20/.
+
+# -- Compile NEMO Tools -- #
+if [[ "$COMPILE_TOOLS" == 1 ]]; then
+    echo "--> Compiling NEMO Tools"
+    cd "$NEMODIR"/tools || exit
+    ../../src/compile_tools || exit
+fi
+
+# -- Compile NEMO Configurations -- #
+echo "--> Compiling NEMO"
+cd "$NEMODIR" || exit
+../src/compile_nemo || exit
+cd "$WD" || exit
+echo "--> Complete: Setup NEMO + AGRIF eORCA025_SPNA Configurations"
