@@ -1,0 +1,1 @@
+/dssgfs01/scratch/otooth/PROMOTE/cfgs/eORCA025_SPNA16/1_geothermal_heating.nc

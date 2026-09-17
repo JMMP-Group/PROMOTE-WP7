@@ -1,0 +1,1 @@
+/dssgfs01/scratch/otooth/PROMOTE/cfgs/eORCA025_SPNA16/sal_clim_m01.nc

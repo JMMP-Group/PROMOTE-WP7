@@ -1,0 +1,1 @@
+/dssgfs01/scratch/otooth/PROMOTE/cfgs/eORCA025_SPNA20/bfr_cdmin_2d.nc
