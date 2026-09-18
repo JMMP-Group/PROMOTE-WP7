@@ -12,8 +12,8 @@
 
 
 <!-- Files definition -->
-    <file_definition src="./file_def_nemo-oce-BASIC.xml"/>    <!--  NEMO ocean dynamics                     -->
-    <file_definition src="./file_def_nemo-ice-BASIC.xml"/>     <!--  NEMO ocean sea ice                      -->
+    <file_definition src="./file_def_nemo-oce-BASIC_child.xml"/>   <!--  NEMO ocean dynamics                     -->                                   
+    <!-- <file_definition src="./file_def_nemo-ice-BASIC.xml"/>     NEMO ocean sea ice                      -->
 <!--    <file_definition src="./file_def_nemo-bgc.xml"/>  -->   <!--  NEMO ocean biogeochemistry with PISCES  -->
     <!-- 
 ============================================================================================================

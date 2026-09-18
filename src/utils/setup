@@ -123,8 +123,8 @@ fi
 # NEMO Directories:
 cp "$CP_ARG" "${WD}"/{arch,cfgs,data} "$NEMODIR"/. || exit
 # AGRIF_QCO:
-cp "$CP_ARG" "${WD}"/src/utils/TIDY "$NEMODIR"/cfgs/AGRIF_QCO/eORCA025-SPNA16/.
-cp "$CP_ARG" "${WD}"/src/utils/TIDY "$NEMODIR"/cfgs/AGRIF_QCO/eORCA025-SPNA20/.
+cp "$CP_ARG" "${WD}"/src/utils/scripts/. "$NEMODIR"/cfgs/AGRIF_QCO/eORCA025-SPNA16/
+cp "$CP_ARG" "${WD}"/src/utils/scripts/. "$NEMODIR"/cfgs/AGRIF_QCO/eORCA025-SPNA20/
 
 # -- Compile NEMO Tools -- #
 if [[ "$COMPILE_TOOLS" == 1 ]]; then

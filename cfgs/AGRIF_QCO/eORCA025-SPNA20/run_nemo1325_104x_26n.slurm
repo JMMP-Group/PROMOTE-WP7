@@ -1,13 +1,13 @@
 #!/bin/bash
 #SBATCH --job-name=eORCA025_SPNA20
 #SBATCH --partition=compute
-#SBATCH --time=12:00:00
+#SBATCH --time=16:00:00
 #SBATCH --ntasks-per-node=64
+#SBATCH --mem=240G
 #SBATCH --ntasks-per-core=1
 #SBATCH --ntasks-per-socket=32
 #SBATCH --nodes=26
 ###SBATCH --exclude=compute[005,008,054,058]
-
 
 # ========================================================
 # PARAMETERS TO SET
@@ -191,72 +191,73 @@ for NAMELIST in *namelist_cfg; do
     TSTEP=$(( (PARENT_IT000 - 1) * RATIO ))
     IT000=$(( TSTEP + 1 ))
 
-    # Edit nn_itend and (possibly) ln_rst_list and nn_stocklist
-    # Deal with frequency and length units (convert to hours in all cases)
-    # TIME_UNITS=0 # 0=years ; 1=days ; 2=hours ; no conversion required for last case.
-    if [ "$TIME_UNITS" -eq 0 ]; then
-        #
-        # First calculate the final timestep of the experiment based on LENGTH, ITBEGIN and nn_date0 
-        # For simplicity, assume always starting at the beginning of the year.
-        #
-        DATE0=$(get_var nn_date0 ./namelist_cfg)
-        EXP_START_YR=${DATE0:0:4} ; EXP_START_MTH=${DATE0:4:2} ; EXP_START_DAY=${DATE0:6:2}
-        EXP_LENGTH=$(greg_length $EXP_START_YR )
-        LT=$(( LENGTH - 1 ))
-        if [ "$LT" -gt 0 ] ; then
-          if [ $SPIN = 1 ] ; then
-            EXP_LENGTH=$(( EXP_LENGTH * LENGTH ))
-          else
-            for y in `seq 1 1 $LT`
-            do
-              EXP_START_YR=$(( EXP_START_YR + 1 ))
-              YL=$( greg_length $EXP_START_YR )
-              EXP_LENGTH=$(( EXP_LENGTH + YL ))
-            done
-          fi
-        fi
-        # Convert from days to hours
-        EXP_LENGTH=$(( EXP_LENGTH * 24 ))
-
-        # Next calculate the end-of-year timesteps in this period of the experiment
-        # based on FREQRST, IT000 and ending date of previous job-step
-        # Note FREQRST is used to determine the length of each job-step. End of year restarts
-        # are always written even when FREQRST > 1
-        NEXT_STOCK="$(( IT000 - 1 + ( YR_LEN * 24 * 60 * 60 ) / DT ))"
-        STOCK_LIST=$NEXT_STOCK
-        LT=$(( FREQRST - 1 ))
-        if [ "$LT" -gt 0 ] ; then
-            INC_YR=$START_YR
-          for y in `seq 1 1 $LT`
-          do
-            INC_YR=$(( INC_YR + 1 ))
-            YL=$( greg_length $INC_YR )
-            NEXT_STOCK="$(( NEXT_STOCK + ( YL * 24 * 60 * 60 ) / DT ))"
-            # stocklist is limited to length 10
-            if [ "$y" -lt 10 ] ; then
-              STOCK_LIST="${STOCK_LIST},${NEXT_STOCK}"
-            fi
-          done
-        fi
-        ITEND=$NEXT_STOCK
-            edit_var nn_stocklist "$STOCK_LIST" "$NAMELIST"
-            edit_var ln_rst_list ".true." "$NAMELIST"
-    elif [ "$TIME_UNITS" -eq 1 ]; then
-            ITEND=$(( IT000 - 1 + ( FREQRST * 24 * 60 * 60 ) / DT ))
-            EXP_LENGTH=$(( LENGTH * 24 ))
-            edit_var ln_rst_list ".false." "$NAMELIST"
-    elif [ "$TIME_UNITS" -eq 2 ]; then
-            ITEND=$(( IT000 - 1 + ( FREQRST * 60 * 60 ) / DT ))
-            EXP_LENGTH=$LENGTH 
-            edit_var ln_rst_list ".false." "$NAMELIST"
+# Edit nn_itend and (possibly) ln_rst_list and nn_stocklist
+# Deal with frequency and length units (convert to hours in all cases)
+# TIME_UNITS=0 # 0=years ; 1=days ; 2=hours ; no conversion required for last case.
+if [ "$TIME_UNITS" -eq 0 ]; then
+    #
+    # First calculate the final timestep of the experiment based on LENGTH, ITBEGIN and nn_date0 
+    # For simplicity, assume always starting at the beginning of the year.
+    #
+    DATE0=$(get_var nn_date0 ./namelist_cfg)
+    EXP_START_YR=${DATE0:0:4} ; EXP_START_MTH=${DATE0:4:2} ; EXP_START_DAY=${DATE0:6:2}
+    EXP_LENGTH=$(greg_length $EXP_START_YR )
+    LT=$(( LENGTH - 1 ))
+    if [ "$LT" -gt 0 ] ; then
+      if [ $SPIN = 1 ] ; then
+        EXP_LENGTH=$(( EXP_LENGTH * LENGTH ))
+      else
+        for y in `seq 1 1 $LT`
+        do
+          EXP_START_YR=$(( EXP_START_YR + 1 ))
+          YL=$( greg_length $EXP_START_YR )
+          EXP_LENGTH=$(( EXP_LENGTH + YL ))
+        done
+      fi
     fi
+    # Convert from days to hours
+    EXP_LENGTH=$(( EXP_LENGTH * 24 ))
 
-    FINAL=$(( ITBEGIN - 1 + ( EXP_LENGTH * 60 * 60 ) / DT ))
-    echo "ITEND = "$ITEND
-    echo "FINAL = "$FINAL
-    if [ "$ITEND" -ge "$FINAL" ]; then
-        ITEND=$FINAL
+    # Next calculate the end-of-year timesteps in this period of the experiment
+    # based on FREQRST, IT000 and ending date of previous job-step
+    # Note FREQRST is used to determine the length of each job-step. End of year restarts
+    # are always written even when FREQRST > 1
+    NEXT_STOCK="$(( IT000 - 1 + ( YR_LEN * 24 * 60 * 60 ) / DT ))"
+    STOCK_LIST=$NEXT_STOCK
+    LT=$(( FREQRST - 1 ))
+    if [ "$LT" -gt 0 ] ; then
+        INC_YR=$START_YR
+      for y in `seq 1 1 $LT`
+      do
+        INC_YR=$(( INC_YR + 1 ))
+        YL=$( greg_length $INC_YR )
+        NEXT_STOCK="$(( NEXT_STOCK + ( YL * 24 * 60 * 60 ) / DT ))"
+        # stocklist is limited to length 10
+        if [ "$y" -lt 10 ] ; then
+          STOCK_LIST="${STOCK_LIST},${NEXT_STOCK}"
+        fi
+      done
     fi
+    ITEND=$NEXT_STOCK
+        echo "nn_stocklist = $STOCK_LIST -> $NAMELIST"
+        edit_var nn_stocklist "$STOCK_LIST" "$NAMELIST"
+        edit_var ln_rst_list ".true." "$NAMELIST"
+elif [ "$TIME_UNITS" -eq 1 ]; then
+        ITEND=$(( IT000 - 1 + ( FREQRST * 24 * 60 * 60 ) / DT ))
+        EXP_LENGTH=$(( LENGTH * 24 ))
+        edit_var ln_rst_list ".false." "$NAMELIST"
+elif [ "$TIME_UNITS" -eq 2 ]; then
+        ITEND=$(( IT000 - 1 + ( FREQRST * 60 * 60 ) / DT ))
+        EXP_LENGTH=$LENGTH 
+        edit_var ln_rst_list ".false." "$NAMELIST"
+fi
+
+FINAL=$(( ITBEGIN - 1 + ( EXP_LENGTH * 60 * 60 ) / DT ))
+echo "ITEND = "$ITEND
+echo "FINAL = "$FINAL
+if [ "$ITEND" -ge "$FINAL" ]; then
+    ITEND=$FINAL
+fi
     edit_var nn_itend "$ITEND" "$NAMELIST"
 done
 

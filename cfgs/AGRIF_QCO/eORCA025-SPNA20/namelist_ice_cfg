@@ -1,8 +1,8 @@
 &nampar
-cn_icerst_in='restart_ice',
-cn_icerst_indir='.',
+	cn_icerst_in = 'dummy',
+cn_icerst_indir='./RESTARTS',
 cn_icerst_out='restart_ice',
-cn_icerst_outdir='/home/users/adam.blaker.ext/cylc-run/PROMOTE/u-dy838/run1/share/data/History_Data/NEMOhist//',
+cn_icerst_outdir='./RESTARTS',
 jpl=5,
 ln_icedyn=.true.,
 ln_icethd=.true.,
