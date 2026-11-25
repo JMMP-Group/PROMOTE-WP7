@@ -1,8 +1,12 @@
+# Created by https://www.toptal.com/developers/gitignore/api/jupyternotebooks,fortran,svn,matlab,python,emacs,vim
+# Edit at https://www.toptal.com/developers/gitignore?templates=jupyternotebooks,fortran,svn,matlab,python,emacs,vim
+
+# NEMO Working Directory:
 nemo/
 head/
 
-# Created by https://www.toptal.com/developers/gitignore/api/jupyternotebooks,fortran,svn,matlab,python,emacs,vim
-# Edit at https://www.toptal.com/developers/gitignore?templates=jupyternotebooks,fortran,svn,matlab,python,emacs,vim
+# NEMO Pipeline Directory:
+nemo_pipeline/
 
 ### Emacs ###
 # -*- mode: gitignore; -*-
